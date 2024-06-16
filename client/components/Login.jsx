@@ -90,8 +90,8 @@ function Login( { navigation } ) {
                             <Text style={styles.loginButtonText}>Login</Text>
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => { /* Handle new account */ }}>
-                        <Text style={styles.signUpButtonText}>Don't have an account? Sign Up</Text>
+                    <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => { navigation.navigate('SignUp') }}>
+                        <Text style={styles.signUpButtonText}>Don't have an account? Sign Up.</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => { /* Handle forgot password */ }}>
                         <Text style={styles.forgotPasswordButtonText}>Forgot Password?</Text>

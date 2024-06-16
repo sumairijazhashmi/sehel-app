@@ -17,7 +17,7 @@ function InitialPage( { navigation } ) {
                         <TouchableOpacity style={styles.loginButton} onPress={() => { navigation.navigate('Login') }}>
                             <Text style={styles.loginButtonText}>Login</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.signUpButton} onPress={() => { /* Handle sign up */ }}>
+                        <TouchableOpacity style={styles.signUpButton} onPress={() => { navigation.navigate('SignUp') }}>
                             <Text style={styles.signUpButtonText}>Sign up</Text>
                         </TouchableOpacity>
                     </View>
