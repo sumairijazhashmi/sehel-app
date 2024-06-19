@@ -43,7 +43,7 @@ function Login( { navigation } ) {
                     });
                     setError(null);
                     setSuccess("Logged In!");
-                    // navigation.navigate("HomePage")
+                    navigation.navigate("HomePage")
                 }
             }
             

@@ -7,6 +7,8 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from './components/Login';
 import { UserProvider } from './context/UserContext';
 import SignUp from './components/SignUp';
+import HomePage from './components/HomePage';
+import BottomBar from './components/BottomBar';
 
 
 const Stack = createNativeStackNavigator();
@@ -17,7 +19,7 @@ export default function App() {
   return (
     <UserProvider>
       <NavigationContainer>
-        {/* initial, login, signup, forgot password */}
+        {/* initial, login, signup, home page */}
         <Stack.Navigator>
           <Stack.Screen 
             name="InitialPage"
@@ -33,6 +35,16 @@ export default function App() {
             name="SignUp"
             component={SignUp}
             options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="HomePage"
+            component={HomePage}
+            options = {{headerShown: false}}
+          />
+          <Stack.Screen
+            name="BottomBar"
+            component={BottomBar}
+            options = {{headerShown: false}}
           />
         </Stack.Navigator>
       </NavigationContainer>

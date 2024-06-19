@@ -87,7 +87,7 @@ function SignUp( { navigation } ) {
                     setError(null);
                     setSuccess("Signed Up!");
                     setScenario(prevState => prevState + 1)
-                    // navigation.navigate("HomePage")
+                    navigation.navigate("HomePage")
                 }
             }
             
