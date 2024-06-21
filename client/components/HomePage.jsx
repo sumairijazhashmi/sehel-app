@@ -10,6 +10,9 @@ function HomePage( {navigation} ) {
 
     const [name, setName] = useState(null);
 
+    // useEffect(())
+    
+
 
     return (
         <View style={styles.container} >

@@ -1,9 +1,10 @@
-import React, { useContext, useState } from 'react';
-import { StyleSheet, Text, View , TextInput, TouchableOpacity} from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity} from 'react-native';
 import { UserContext } from '../context/UserContext';
-import { loginurl, makeprofileurl, signupurl } from '../constant';
+import { uploadprofilepicurl, makeprofileurl, signupurl } from '../constant';
 import axios from 'axios';
 import {Picker} from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import LocationModal from './LocationModal';
 
 const businessCategories = ["Home Kitchen", "Clothing", "Handicrafts", "Jewellery"]
@@ -24,6 +25,7 @@ function SignUp( { navigation } ) {
     const [category, setCategory] = useState("Select Category");
     const [location, setLocation] = useState({ area: '', city: '', country: '' });
     const [description, setDescription] = useState(null);
+    const [photo, setPhoto] = useState(null);
 
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -42,7 +44,27 @@ function SignUp( { navigation } ) {
     const handleCloseModal = () => {
         setModalVisible(false);
     };
-    
+
+    const selectPhoto = async () => {
+
+        try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.All,
+              allowsEditing: true,
+              aspect: [4, 4],
+              quality: 1,
+            });
+
+            if (!result.cancelled) {
+                setPhoto(result.assets[0].uri);
+            }
+
+
+        } catch(err) {
+            console.log(err)
+        }
+    };
+
 
     const handleSignUp = async () => {
         if (name == null || phoneNumber == null || pin == null || confirmpin == null) {
@@ -68,16 +90,12 @@ function SignUp( { navigation } ) {
                 PIN: pin
             }
 
-            console.log(data);
             
             response = await axios.post(signupurl, data,  {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-
-            console.log(response.status)
-            console.log(response.data)
 
             if (response.status == 200) {
                 if (response.data == "success!") {
@@ -87,7 +105,6 @@ function SignUp( { navigation } ) {
                     setError(null);
                     setSuccess("Signed Up!");
                     setScenario(prevState => prevState + 1)
-                    navigation.navigate("HomePage")
                 }
             }
             
@@ -120,7 +137,6 @@ function SignUp( { navigation } ) {
                 Description: description,
             }
 
-            console.log(data);
             
             response = await axios.post(makeprofileurl, data,  {
                 headers: {
@@ -128,8 +144,6 @@ function SignUp( { navigation } ) {
                 }
             });
 
-            console.log(response.status)
-            console.log(response.data)
 
             if (response.status == 200) {
                 if (response.data == "success!") {
@@ -138,8 +152,57 @@ function SignUp( { navigation } ) {
                     });
                     setError(null);
                     setSuccess("Profile Made!");
-                    // setScenario(prevState => prevState + 1)
-                    // navigation.navigate("HomePage")
+
+                    try {
+                        // upload photo
+                        if(!photo) {
+                            navigation.navigate("HomePage")
+                            return;
+                        }
+
+                        const formData = new FormData();
+                        const filename = photo.split('/').pop();
+                        const match = /\.(\w+)$/.exec(filename);
+                        const type = match ? `image/${match[1]}` : `image`;
+                    
+                        const file = {
+                            uri: photo,
+                            name: filename,
+                            type,
+                        };
+                    
+                        formData.append('photo', file);
+                        formData.append('phonenumber', phoneNumber);
+
+                        response = await axios.post(uploadprofilepicurl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        })
+
+                        if (response.status == 200) {
+                            if (response.data == "success!") {
+                                navigation.navigate("HomePage")
+                            }
+                            else {
+                                setError("some error occurred")
+                            }
+                        }
+
+
+                    }
+                    catch (err) {
+                        if (err.response) {
+                            // Server responded with a status code outside of 2xx
+                            setError(`${err.response.data}`);
+                        } else if (err.request) {
+                            // Request was made but no response received
+                            setError('Network Error: No response received.');
+                        } else {
+                            // Something happened in setting up the request
+                            setError(`Error: ${err.message}`);
+                        }
+                    }
                 }
             }
             
@@ -213,6 +276,18 @@ function SignUp( { navigation } ) {
                     </>
                     :
                     <>
+                         <TouchableOpacity onPress={selectPhoto} style={styles.profileCircle}>
+                            {photo ? (
+                            <Image source={{ uri: photo }} style={styles.profileImage} />
+                            ) : (
+                            <Image
+                                source={require('./assets/placeholder_profile_pic.png')} // Placeholder image
+                                style={styles.profileImage}
+                            />
+                            )}
+                        </TouchableOpacity>
+                        <Text onPress={selectPhoto} style={styles.profilePicText}>Upload Profile Picture</Text>
+
                         <TextInput
                             style={styles.input}
                             placeholder="Business Name"
@@ -259,7 +334,7 @@ function SignUp( { navigation } ) {
                                 <Text style={styles.nextButtonText}>Make Profile</Text>
                             </TouchableOpacity>
                         </View>
-                        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => { /* navigation.navigate("HomePage") */ }}>
+                        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => {  navigation.navigate("HomePage")  }}>
                             <Text style={styles.signUpButtonText}>Want to do this later? Click here.</Text>
                         </TouchableOpacity>
                     </>
@@ -307,6 +382,24 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         alignItems: 'center',
         marginBottom: 10,
+    },
+    profileCircle: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#ccc',
+    },
+    profilePicText: {
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+      profileImage: {
+        width: '100%',
+        height: '100%',
     },
     logo: {
         width: 250,

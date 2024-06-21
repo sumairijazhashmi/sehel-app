@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -30,6 +31,12 @@ type ProfileUser struct {
 	Category     string `json:"category"`
 	Location     string `json:"location"`
 	Description  string `json:"description"`
+}
+
+type File struct {
+	ID       int
+	Filename string
+	FileData []byte
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +143,61 @@ func (h *Handler) MakeProfileHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success!"))
 
+}
+
+func (h *Handler) UploadProfilePic(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20 << 20) // Limit upload size to 10 MB
+	if err != nil {
+		http.Error(w, "Unable to parse form", http.StatusBadRequest)
+		return
+	}
+
+	file, _, err := r.FormFile("photo")
+	phonenumber := r.FormValue("phonenumber")
+	if err != nil {
+		http.Error(w, "Unable to retrieve the file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Unable to read the file", http.StatusInternalServerError)
+		return
+	}
+
+	stmt, err := h.DB.Prepare("UPDATE users SET profile_pic=$1 WHERE phone_number=$2")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(fileBytes, phonenumber)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success!"))
+}
+
+func (h *Handler) GetProfilePic(w http.ResponseWriter, r *http.Request) {
+	var profilePic []byte
+
+	phoneNumber := r.URL.Query().Get("phoneNumber")
+
+	err := h.DB.QueryRow("SELECT profile_pic FROM users WHERE phone_number=$1", phoneNumber).Scan(&profilePic)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, err = w.Write(profilePic)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func hashPIN(pin string) string {

@@ -40,6 +40,8 @@ func main() {
 	mux.HandleFunc("POST /login", handler.LoginHandler)
 	mux.HandleFunc("POST /signup", handler.SignUpHandler)
 	mux.HandleFunc("POST /makeprofile", handler.MakeProfileHandler)
+	mux.HandleFunc("POST /uploadprofilepic", handler.UploadProfilePic)
+	mux.HandleFunc("GET /getprofilepic", handler.GetProfilePic)
 
 	mainHandler := corsMiddleware(mux)
 

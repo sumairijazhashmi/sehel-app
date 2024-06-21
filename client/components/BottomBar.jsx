@@ -1,14 +1,30 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, TouchableOpacity, Image, StyleSheet, Text } from "react-native";
 import Icon from 'react-native-vector-icons/Feather';
+import { UserContext } from "../context/UserContext";
+import { useContext } from "react";
+import axios from "axios";
+import { getprofilepicurl } from "../constant";
+import * as FileSystem from 'expo-file-system';
 
 
 function BottomBar( {navigation} ) {
 
+    const { user, setUser } = useContext(UserContext);
+    const [profilePic, setProfilePic] = useState(null)
+
+
     useEffect(() => {
-        console.log(navigation)
-    }, [navigation])
+
+
+    //   const getProfilePic = async () => {
+
+        
+    //   }
+
+    //   getProfilePic();
+    }, [])
 
     return (
         <View style={styles.container}>
@@ -25,10 +41,18 @@ function BottomBar( {navigation} ) {
 
           {/* my profile */}
            <TouchableOpacity style={styles.iconContainer}>
-            <Image
-              source={{ uri: 'https://path-to-your-image.png' }}
-              style={styles.profileImage}
-            />
+            {
+              profilePic ? 
+              <Image
+                source={{ uri: profilePic }}
+                style={styles.profileImage}
+              />
+              :
+              <Image
+                source={require('./assets/placeholder_profile_pic.png') }
+                style={styles.profileImage}
+              />
+            }
           </TouchableOpacity> 
 
         </View>

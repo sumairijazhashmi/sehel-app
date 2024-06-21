@@ -41,8 +41,12 @@ function Login( { navigation } ) {
                     setUser({
                         phoneNumber: phoneNumber
                     });
+
+
                     setError(null);
                     setSuccess("Logged In!");
+
+                    
                     navigation.navigate("HomePage")
                 }
             }

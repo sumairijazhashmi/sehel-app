@@ -4,7 +4,7 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState({ 
-    phoneNumber: null 
+    phoneNumber: null,
   });
 
   return (
