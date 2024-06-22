@@ -6,7 +6,7 @@ import { UserContext } from "../context/UserContext";
 import { useContext } from "react";
 import axios from "axios";
 import { getprofilepicurl } from "../constant";
-import * as FileSystem from 'expo-file-system';
+import { Buffer } from 'buffer';
 
 
 function BottomBar( {navigation} ) {
@@ -18,12 +18,40 @@ function BottomBar( {navigation} ) {
     useEffect(() => {
 
 
-    //   const getProfilePic = async () => {
+      const getProfilePic = async () => {
 
+        try {
+          const response = await axios.get(getprofilepicurl, {
+            params: { phoneNumber: user.phoneNumber },
+            responseType: 'arraybuffer',
+          });
+  
+          if (response.status == 200) {
+            const base64 = Buffer.from(response.data, 'binary').toString('base64');
+            const imageUri = `data:image/png;base64,${base64}`;
+            setProfilePic(imageUri);
+          }
+          else {
+            console.log(response.status, response.data);
+          }
+
+        } catch (err) {
+            setProfilePic(null)
+            if (err.response) {
+              // Server responded with a status code outside of 2xx
+              console.log(`${err.response.data}`);
+          } else if (err.request) {
+              // Request was made but no response received
+              console.log('Network Error: No response received.');
+          } else {
+              // Something happened in setting up the request
+              console.log(`Error: ${err.message}`);
+          }
+        }
         
-    //   }
+      }
 
-    //   getProfilePic();
+      getProfilePic();
     }, [])
 
     return (
@@ -40,12 +68,13 @@ function BottomBar( {navigation} ) {
           </TouchableOpacity>
 
           {/* my profile */}
-           <TouchableOpacity style={styles.iconContainer}>
+           <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.navigate("MyProfile") }} >
             {
               profilePic ? 
               <Image
                 source={{ uri: profilePic }}
                 style={styles.profileImage}
+                onLoad={() => URL.revokeObjectURL(profilePic)}
               />
               :
               <Image

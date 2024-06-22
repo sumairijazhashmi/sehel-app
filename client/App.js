@@ -9,6 +9,7 @@ import { UserProvider } from './context/UserContext';
 import SignUp from './components/SignUp';
 import HomePage from './components/HomePage';
 import BottomBar from './components/BottomBar';
+import MyProfile from "./components/MyProfile";
 
 
 const Stack = createNativeStackNavigator();
@@ -44,6 +45,11 @@ export default function App() {
           <Stack.Screen
             name="BottomBar"
             component={BottomBar}
+            options = {{headerShown: false}}
+          />
+          <Stack.Screen 
+            name="MyProfile"
+            component={MyProfile}
             options = {{headerShown: false}}
           />
         </Stack.Navigator>

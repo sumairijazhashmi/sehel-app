@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Handler struct {
@@ -26,6 +29,15 @@ type SignUpUser struct {
 }
 
 type ProfileUser struct {
+	PhoneNumber  string `json:"phonenumber"`
+	BusinessName string `json:"businessname"`
+	Category     string `json:"category"`
+	Location     string `json:"location"`
+	Description  string `json:"description"`
+}
+
+type GetUser struct {
+	Name         string `json:"name"`
 	PhoneNumber  string `json:"phonenumber"`
 	BusinessName string `json:"businessname"`
 	Category     string `json:"category"`
@@ -152,7 +164,7 @@ func (h *Handler) UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, _, err := r.FormFile("photo")
+	file, header, err := r.FormFile("photo")
 	phonenumber := r.FormValue("phonenumber")
 	if err != nil {
 		http.Error(w, "Unable to retrieve the file", http.StatusBadRequest)
@@ -160,22 +172,33 @@ func (h *Handler) UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		http.Error(w, "Unable to read the file", http.StatusInternalServerError)
+	const dir = "profile_pics"
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.Mkdir(dir, 0755)
+		if err != nil {
+			http.Error(w, "Unable to create directory", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	fileExtension := filepath.Ext(header.Filename)
+	if fileExtension == "" {
+		http.Error(w, "Unable to determine file extension", http.StatusBadRequest)
 		return
 	}
 
-	stmt, err := h.DB.Prepare("UPDATE users SET profile_pic=$1 WHERE phone_number=$2")
+	filePath := filepath.Join(dir, phonenumber+fileExtension)
+
+	dst, err := os.Create(filePath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to create the file on server", http.StatusInternalServerError)
 		return
 	}
-	defer stmt.Close()
+	defer dst.Close()
 
-	_, err = stmt.Exec(fileBytes, phonenumber)
+	_, err = io.Copy(dst, file)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Unable to save the file", http.StatusInternalServerError)
 		return
 	}
 
@@ -184,20 +207,74 @@ func (h *Handler) UploadProfilePic(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetProfilePic(w http.ResponseWriter, r *http.Request) {
-	var profilePic []byte
 
 	phoneNumber := r.URL.Query().Get("phoneNumber")
 
-	err := h.DB.QueryRow("SELECT profile_pic FROM users WHERE phone_number=$1", phoneNumber).Scan(&profilePic)
+	const dir = "profile_pics"
+	filePattern := filepath.Join(dir, phoneNumber+"*")
+
+	matches, err := filepath.Glob(filePattern)
+	if err != nil || len(matches) == 0 {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	filePath := matches[0]
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "Unable to open file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	contentType := "application/octet-stream"
+	if strings.HasSuffix(filePath, ".jpg") || strings.HasSuffix(filePath, ".jpeg") {
+		contentType = "image/jpeg"
+	} else if strings.HasSuffix(filePath, ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(filePath, ".gif") {
+		contentType = "image/gif"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Unable to serve the file", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *Handler) GetName(w http.ResponseWriter, r *http.Request) {
+	phoneNumber := r.URL.Query().Get("phoneNumber")
+
+	var name string
+	err := h.DB.QueryRow("SELECT name FROM users WHERE phone_number=$1", phoneNumber).Scan(&name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	w.Header().Set("Content-Type", "application/octet-stream")
-	_, err = w.Write(profilePic)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(name))
+}
+
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+
+	phoneNumber := r.URL.Query().Get("phoneNumber")
+
+	var user GetUser
+	user.PhoneNumber = phoneNumber
+	err := h.DB.QueryRow("SELECT name, business_name, description, category, location FROM users WHERE phone_number=$1", phoneNumber).Scan(&user.Name, &user.BusinessName, &user.Description, &user.Category, &user.Location)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func hashPIN(pin string) string {
