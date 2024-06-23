@@ -2,76 +2,19 @@ import React, { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet , TouchableOpacity, Image} from "react-native"
 import BottomBar from "./BottomBar";
 import { UserContext } from "../context/UserContext";
-import axios from "axios";
-import { getuser, getprofilepicurl } from "../constant";
-import { Buffer } from 'buffer';
 
 
 function MyProfile({ navigation }) {
 
     const { user, setUser } = useContext(UserContext);
-    const [profilePic, setProfilePic] = useState(null)
-    const [name, setName] = useState(null)
-    const [businessName, setBusinessName] = useState(null)
-    const [category, setCategory] = useState(null);
-    const [location, setLocation] = useState(null);
-    const [description, setDescription] = useState(null);
-
-
-    useEffect(() => {
-
-        const getUser = async () => {
-            try {
-                const response = await axios.get(getuser, {
-                    params: { phoneNumber: user.phoneNumber }
-                })
-
-                if(response.status == 200) {
-                    setName(response.data.name)
-                    setBusinessName(response.data.businessname)
-                    setCategory(response.data.category)
-                    setDescription(response.data.description)
-                    setLocation(response.data.location)
-
-                    const response2 = await axios.get(getprofilepicurl, {
-                        params: { phoneNumber: user.phoneNumber },
-                        responseType: 'arraybuffer',
-                      });
-              
-                      if (response2.status == 200) {
-                        const base64 = Buffer.from(response2.data, 'binary').toString('base64');
-                        const imageUri = `data:image/png;base64,${base64}`;
-                        setProfilePic(imageUri);
-                      }
-
-
-                }
-            }
-            catch (err) {
-                if (err.response) {
-                    // Server responded with a status code outside of 2xx
-                    console.log(`${err.response.data}`);
-                } else if (err.request) {
-                    // Request was made but no response received
-                    console.log('Network Error: No response received.');
-                } else {
-                    // Something happened in setting up the request
-                    console.log(`Error: ${err.message}`);
-                }
-            }
-        }
-
-        getUser();
-    }, [])
 
     return (
         <View style={styles.container}>
             {
-              profilePic ? 
+              user.profilePicUri ? 
               <Image
-                source={{ uri: profilePic }}
+                source={{ uri: user.profilePicUri }}
                 style={styles.profileImage}
-                onLoad={() => URL.revokeObjectURL(profilePic)}
               />
               :
               <Image
@@ -79,7 +22,7 @@ function MyProfile({ navigation }) {
                 style={styles.profileImage}
               />
             }
-            <Text style={styles.userName}>{name ? name : "Fiza Khan"}</Text>
+            <Text style={styles.userName}>{user.name ? user.name : "Fiza Khan"}</Text>
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.buttonP}>
                     <Text style={styles.buttonText}>See Posts</Text>
@@ -96,16 +39,16 @@ function MyProfile({ navigation }) {
                     <Text style={styles.infoText}>{user.phoneNumber}</Text>
 
                     <Text style={styles.infoLabel}>Business Name</Text>
-                    <Text style={styles.infoText}>{businessName ? businessName : "Fiza Catering"}</Text>
+                    <Text style={styles.infoText}>{user.businessName ? user.businessName : "Fiza Catering"}</Text>
 
                     <Text style={styles.infoLabel}>Description</Text>
-                    <Text style={styles.infoText}>{description ? description : "Home cooked meals"}</Text>
+                    <Text style={styles.infoText}>{user.description ? user.description : "Home cooked meals"}</Text>
 
                     <Text style={styles.infoLabel}>Category</Text>
-                    <Text style={styles.infoText}>{category ? category : "Home Kitchen"}</Text>
+                    <Text style={styles.infoText}>{user.category ? user.category : "Home Kitchen"}</Text>
 
                     <Text style={styles.infoLabel}>Location</Text>
-                    <Text style={styles.infoText}>{location ? location : "Gulberg"}</Text>
+                    <Text style={styles.infoText}>{user.location ? user.location : "Gulberg"}</Text>
 
                     <TouchableOpacity style={styles.logoutButton}>
                         <Text style={styles.logoutButtonText}>Log out</Text>

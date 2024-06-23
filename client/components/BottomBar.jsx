@@ -12,47 +12,6 @@ import { Buffer } from 'buffer';
 function BottomBar( {navigation} ) {
 
     const { user, setUser } = useContext(UserContext);
-    const [profilePic, setProfilePic] = useState(null)
-
-
-    useEffect(() => {
-
-
-      const getProfilePic = async () => {
-
-        try {
-          const response = await axios.get(getprofilepicurl, {
-            params: { phoneNumber: user.phoneNumber },
-            responseType: 'arraybuffer',
-          });
-  
-          if (response.status == 200) {
-            const base64 = Buffer.from(response.data, 'binary').toString('base64');
-            const imageUri = `data:image/png;base64,${base64}`;
-            setProfilePic(imageUri);
-          }
-          else {
-            console.log(response.status, response.data);
-          }
-
-        } catch (err) {
-            setProfilePic(null)
-            if (err.response) {
-              // Server responded with a status code outside of 2xx
-              console.log(`${err.response.data}`);
-          } else if (err.request) {
-              // Request was made but no response received
-              console.log('Network Error: No response received.');
-          } else {
-              // Something happened in setting up the request
-              console.log(`Error: ${err.message}`);
-          }
-        }
-        
-      }
-
-      getProfilePic();
-    }, [])
 
     return (
         <View style={styles.container}>
@@ -70,11 +29,10 @@ function BottomBar( {navigation} ) {
           {/* my profile */}
            <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.navigate("MyProfile") }} >
             {
-              profilePic ? 
+              user.profilePicUri ? 
               <Image
-                source={{ uri: profilePic }}
+                source={{ uri: user.profilePicUri }}
                 style={styles.profileImage}
-                onLoad={() => URL.revokeObjectURL(profilePic)}
               />
               :
               <Image

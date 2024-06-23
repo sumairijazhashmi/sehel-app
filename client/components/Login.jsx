@@ -1,8 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { StyleSheet, Text, View , TextInput, TouchableOpacity} from 'react-native';
 import { UserContext } from '../context/UserContext';
-import { loginurl } from '../constant';
+import { loginurl, getuser, getprofilepicurl } from '../constant';
 import axios from 'axios';
+import { Buffer } from 'buffer';
+
 
 function Login( { navigation } ) {
 
@@ -25,7 +27,6 @@ function Login( { navigation } ) {
                 PIN: pin
             }
 
-            console.log(data);
             
             response = await axios.post(loginurl, data,  {
                 headers: {
@@ -33,20 +34,51 @@ function Login( { navigation } ) {
                 }
             });
 
-            console.log(response.status)
-            console.log(response.data)
 
             if (response.status == 200) {
                 if (response.data == "success!") {
-                    setUser({
-                        phoneNumber: phoneNumber
-                    });
 
+                    setSuccess("Logging In!")
+                   
+
+                    const response2 = await axios.get(getuser, {
+                        params: { phoneNumber: phoneNumber }
+                    })
+
+                    if(response2.status == 200) {
+
+                        setUser(prevState => (
+                            {
+                                ...prevState,
+                                phoneNumber: phoneNumber,
+                                name: response2.data.name,
+                                category: response2.data.category,
+                                businessName: response2.data.business_name,
+                                description: response2.data.description,
+                                location: response2.data.location,
+                            }
+                        ))
+
+                        const response3 = await axios.get(getprofilepicurl, {
+                            params: { phoneNumber: phoneNumber },
+                            responseType: 'arraybuffer',
+                        });
+
+                  
+                        if (response3.status == 200 && response3.data.byteLength > 0) {
+                            const base64 = Buffer.from(response3.data, 'binary').toString('base64');
+                            const imageUri = `data:image/png;base64,${base64}`;
+
+                            setUser(prevState => ({
+                                ...prevState,
+                                profilePicUri: imageUri
+                            }))
+                        }
+    
+                    }
 
                     setError(null);
                     setSuccess("Logged In!");
-
-                    
                     navigation.navigate("HomePage")
                 }
             }
@@ -55,7 +87,11 @@ function Login( { navigation } ) {
         catch (err) {
            if (err.response) {
                 // Server responded with a status code outside of 2xx
-                setError(`${err.response.data}`);
+                if(err.response.status == 404) {
+
+                    setSuccess("Logged In!");
+                    navigation.navigate("HomePage")
+                }
             } else if (err.request) {
                 // Request was made but no response received
                 setError('Network Error: No response received.');

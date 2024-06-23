@@ -156,7 +156,7 @@ function SignUp( { navigation } ) {
                     try {
                         // upload photo
                         if(!photo) {
-                            navigation.navigate("HomePage")
+                            navigation.navigate("Login")
                             return;
                         }
 
@@ -182,7 +182,7 @@ function SignUp( { navigation } ) {
 
                         if (response.status == 200) {
                             if (response.data == "success!") {
-                                navigation.navigate("HomePage")
+                                navigation.navigate("Login")
                             }
                             else {
                                 setError("some error occurred")
@@ -334,7 +334,7 @@ function SignUp( { navigation } ) {
                                 <Text style={styles.nextButtonText}>Make Profile</Text>
                             </TouchableOpacity>
                         </View>
-                        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => {  navigation.navigate("HomePage")  }}>
+                        <TouchableOpacity style={styles.forgotPasswordButton} onPress={() => {  navigation.navigate("Login")  }}>
                             <Text style={styles.signUpButtonText}>Want to do this later? Click here.</Text>
                         </TouchableOpacity>
                     </>

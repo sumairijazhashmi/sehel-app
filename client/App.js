@@ -10,6 +10,7 @@ import SignUp from './components/SignUp';
 import HomePage from './components/HomePage';
 import BottomBar from './components/BottomBar';
 import MyProfile from "./components/MyProfile";
+import EditProfile from './components/EditProfile';
 
 
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,11 @@ export default function App() {
           <Stack.Screen 
             name="MyProfile"
             component={MyProfile}
+            options = {{headerShown: false}}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfile}
             options = {{headerShown: false}}
           />
         </Stack.Navigator>

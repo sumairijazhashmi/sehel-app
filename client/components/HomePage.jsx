@@ -12,47 +12,12 @@ function HomePage( {navigation} ) {
 
     const { user, setUser } = useContext(UserContext)
 
-    const [name, setName] = useState(null);
-
-    useEffect(() => {
-
-        const getName = async () => {
-            try {
-                const response = await axios.get(getname, {
-                    params: { phoneNumber: user.phoneNumber }
-                })
-
-                if (response.status == 200) {
-                    setName(response.data)
-                }
-                else {
-                    console.log(response.data);
-                }
-            }
-            catch (err) {
-                setName("Guest")
-                if (err.response) {
-                    // Server responded with a status code outside of 2xx
-                    console.log(`${err.response.data}`);
-                } else if (err.request) {
-                    // Request was made but no response received
-                    console.log('Network Error: No response received.');
-                } else {
-                    // Something happened in setting up the request
-                    console.log(`Error: ${err.message}`);
-                }
-            }
-        }
-
-        getName()
-    }, [])
-    
 
 
     return (
         <View style={styles.container} >
             <View style={styles.innerContainer}>  
-                <Text style={styles.welcomeText}>Welcome, {name}!</Text>
+                <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
             
                 <View style={styles.cardContainer}>
 

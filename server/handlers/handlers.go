@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -37,12 +36,27 @@ type ProfileUser struct {
 }
 
 type GetUser struct {
+	Name         *string `json:"name,omitempty"`
+	BusinessName *string `json:"business_name,omitempty"`
+	Description  *string `json:"description,omitempty"`
+	Category     *string `json:"category,omitempty"`
+	Location     *string `json:"location,omitempty"`
+	PhoneNumber  string  `json:"phone_number"`
+}
+
+type EditUser struct {
 	Name         string `json:"name"`
 	PhoneNumber  string `json:"phonenumber"`
 	BusinessName string `json:"businessname"`
 	Category     string `json:"category"`
 	Location     string `json:"location"`
 	Description  string `json:"description"`
+}
+
+type ChangePINs struct {
+	PhoneNumber string `json:"phonenumber"`
+	OldPin      string `json:"oldpin"`
+	NewPin      string `json:"newpin"`
 }
 
 type File struct {
@@ -55,14 +69,12 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var user LoginUser
 
 	err := json.NewDecoder(r.Body).Decode(&user)
-	fmt.Printf("user: %+v\n", user)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 	}
 
 	hashedPIN := hashPIN(user.PIN)
 	var exists bool
-	fmt.Printf("phone number: %s, pin: %s, hashed pin: %s \n", user.PhoneNumber, user.PIN, hashedPIN)
 	err = h.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE phone_number =$1 AND pin =$2)", user.PhoneNumber, hashedPIN).Scan(&exists)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -259,14 +271,41 @@ func (h *Handler) GetName(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-
 	phoneNumber := r.URL.Query().Get("phoneNumber")
 
 	var user GetUser
 	user.PhoneNumber = phoneNumber
-	err := h.DB.QueryRow("SELECT name, business_name, description, category, location FROM users WHERE phone_number=$1", phoneNumber).Scan(&user.Name, &user.BusinessName, &user.Description, &user.Category, &user.Location)
+
+	// Define variables for each field
+	var name, businessName, description, category, location sql.NullString
+
+	err := h.DB.QueryRow(
+		"SELECT name, business_name, description, category, location FROM users WHERE phone_number=$1",
+		phoneNumber).Scan(&name, &businessName, &description, &category, &location)
+
 	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if name.Valid {
+		user.Name = &name.String
+	}
+	if businessName.Valid {
+		user.BusinessName = &businessName.String
+	}
+	if description.Valid {
+		user.Description = &description.String
+	}
+	if category.Valid {
+		user.Category = &category.String
+	}
+	if location.Valid {
+		user.Location = &location.String
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -274,6 +313,73 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
+
+	var user EditUser
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Incorrect Payload", http.StatusInternalServerError)
+		return
+	}
+
+	stmt, err := h.DB.Prepare("UPDATE users SET phone_number=$1, name=$2, business_name=$3, description=$4, category=$5, location=$6")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.PhoneNumber, user.Name, user.BusinessName, user.Description, user.Category, user.Location)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success"))
+
+}
+
+func (h *Handler) EditPIN(w http.ResponseWriter, r *http.Request) {
+
+	var pins ChangePINs
+	err := json.NewDecoder(r.Body).Decode(&pins)
+	if err != nil {
+		http.Error(w, "Incorrect Payload", http.StatusInternalServerError)
+		return
+	}
+
+	oldPinHash := hashPIN(pins.OldPin)
+	var storedPin string
+	err = h.DB.QueryRow("SELECT pin FROM users WHERE phone_number=$1", pins.PhoneNumber).Scan(&storedPin)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if oldPinHash != storedPin {
+		http.Error(w, "Incorrect Pin", http.StatusUnauthorized)
+		return
+	}
+
+	hashPin := hashPIN(pins.NewPin)
+	stmt, err := h.DB.Prepare("UPDATE users SET pin=$1 WHERE phone_number=$2")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(hashPin, pins.PhoneNumber)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success"))
 
 }
 
