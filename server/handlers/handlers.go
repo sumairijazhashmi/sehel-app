@@ -59,6 +59,12 @@ type ChangePINs struct {
 	NewPin      string `json:"newpin"`
 }
 
+type PhoneNumberUser struct {
+	OldPhoneNumber string `json:"oldphonenumber"`
+	NewPhoneNumber string `json:"newphonenumber"`
+	PIN            string `json:"pin"`
+}
+
 type File struct {
 	ID       int
 	Filename string
@@ -324,7 +330,7 @@ func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := h.DB.Prepare("UPDATE users SET phone_number=$1, name=$2, business_name=$3, description=$4, category=$5, location=$6")
+	stmt, err := h.DB.Prepare("UPDATE users SET name=$2, business_name=$3, description=$4, category=$5, location=$6 WHERE phone_number=$1")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -332,6 +338,57 @@ func (h *Handler) EditUser(w http.ResponseWriter, r *http.Request) {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(user.PhoneNumber, user.Name, user.BusinessName, user.Description, user.Category, user.Location)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success"))
+
+}
+
+func (h *Handler) EditPhoneNumber(w http.ResponseWriter, r *http.Request) {
+	var user PhoneNumberUser
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Incorrect Payload", http.StatusInternalServerError)
+		return
+	}
+
+	pinHash := hashPIN(user.PIN)
+	var storedPin string
+	err = h.DB.QueryRow("SELECT pin FROM users WHERE phone_number=$1", user.OldPhoneNumber).Scan(&storedPin)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if pinHash != storedPin {
+		http.Error(w, "Incorrect Pin", http.StatusUnauthorized)
+		return
+	}
+
+	var scan bool
+	err = h.DB.QueryRow("SELECT * FROM users WHERE phone_number=$1", user.OldPhoneNumber).Scan(&scan)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if scan {
+		http.Error(w, "Phone Number already exists!", http.StatusBadRequest)
+		return
+	}
+
+	stmt, err := h.DB.Prepare("UPDATE users SET phone_number=$1 WHERE phone_number=$2")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.NewPhoneNumber, user.OldPhoneNumber)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -6,3 +6,6 @@ export const uploadprofilepicurl = `${baseurl}/uploadprofilepic`;
 export const getprofilepicurl = `${baseurl}/getprofilepic`;
 export const getname = `${baseurl}/getname`;
 export const getuser = `${baseurl}/getuser`;
+export const edituser = `${baseurl}/edituser`;
+export const editpin = `${baseurl}/editpin`;
+export const editphonenumber = `${baseurl}/editphonenumber`;

@@ -27,7 +27,7 @@ function MyProfile({ navigation }) {
                 <TouchableOpacity style={styles.buttonP}>
                     <Text style={styles.buttonText}>See Posts</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.buttonP}>
+                <TouchableOpacity style={styles.buttonP} onPress={() => navigation.navigate("EditProfile")}>
                     <Text style={styles.buttonText}>Edit Profile</Text>
                 </TouchableOpacity>
             </View>
