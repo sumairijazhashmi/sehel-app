@@ -370,7 +370,7 @@ func (h *Handler) EditPhoneNumber(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var scan bool
-	err = h.DB.QueryRow("SELECT * FROM users WHERE phone_number=$1", user.OldPhoneNumber).Scan(&scan)
+	err = h.DB.QueryRow("SELECT * FROM users WHERE phone_number=$1", user.NewPhoneNumber).Scan(&scan)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
