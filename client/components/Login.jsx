@@ -4,7 +4,7 @@ import { UserContext } from '../context/UserContext';
 import { loginurl, getuser, getprofilepicurl } from '../constant';
 import axios from 'axios';
 import { Buffer } from 'buffer';
-
+import * as Storage from './Storage'
 
 function Login( { navigation } ) {
 
@@ -59,20 +59,30 @@ function Login( { navigation } ) {
                             }
                         ))
 
+                        
                         const response3 = await axios.get(getprofilepicurl, {
                             params: { phoneNumber: phoneNumber },
                             responseType: 'arraybuffer',
                         });
-
-                  
+                        
+                        
                         if (response3.status == 200 && response3.data.byteLength > 0) {
                             const base64 = Buffer.from(response3.data, 'binary').toString('base64');
                             const imageUri = `data:image/png;base64,${base64}`;
-
+                            
                             setUser(prevState => ({
                                 ...prevState,
                                 profilePicUri: imageUri
                             }))
+                            await Storage.setItem("user", {
+                                "phoneNumber": phoneNumber,
+                                "name": response2.data.name,
+                                "category": response2.data.category,
+                               "businessName": response2.data.business_name,
+                                "description": response2.data.description,
+                                "location": response2.data.location,
+                                "profilePicUri": imageUri
+                            })
                         }
     
                     }
@@ -90,6 +100,22 @@ function Login( { navigation } ) {
                 if(err.response.status == 404) {
 
                     setSuccess("Logged In!");
+                    // await Storage.setItem("user", {
+                    //     "name": user.name,
+                    //     "phoneNumber": user.phoneNumber,
+                    //     "category": user.category,
+                    //     "businessName": user.businessName,
+                    //     "description": user.description,
+                    //     "location": user.location,
+                    // })
+                    await Storage.setItem("user", {
+                        "phoneNumber": phoneNumber,
+                        "name": response2.data.name,
+                        "category": response2.data.category,
+                       "businessName": response2.data.business_name,
+                        "description": response2.data.description,
+                        "location": response2.data.location,
+                    })
                     navigation.navigate("HomePage")
                 }
             } else if (err.request) {

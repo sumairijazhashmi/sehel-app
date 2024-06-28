@@ -2,11 +2,22 @@ import React, { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet , TouchableOpacity, Image} from "react-native"
 import BottomBar from "./BottomBar";
 import { UserContext } from "../context/UserContext";
+import * as Storage from './Storage';
 
 
 function MyProfile({ navigation }) {
 
     const { user, setUser } = useContext(UserContext);
+
+    const Logout = async () => {
+      try {
+        await Storage.removeItem("user")
+        navigation.navigate("InitialPage")
+      }
+      catch(err) {
+        console.log("error")
+      }
+    }
 
     return (
         <View style={styles.container}>
@@ -50,7 +61,7 @@ function MyProfile({ navigation }) {
                     <Text style={styles.infoLabel}>Location</Text>
                     <Text style={styles.infoText}>{user.location ? user.location : "Gulberg"}</Text>
 
-                    <TouchableOpacity style={styles.logoutButton}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={() => Logout()}>
                         <Text style={styles.logoutButtonText}>Log out</Text>
                     </TouchableOpacity>
                 </View>
