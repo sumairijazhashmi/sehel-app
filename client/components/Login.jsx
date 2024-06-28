@@ -59,6 +59,15 @@ function Login( { navigation } ) {
                             }
                         ))
 
+                        await Storage.setItem("user", {
+                                "phoneNumber": phoneNumber,
+                                "name": response2.data.name,
+                                "category": response2.data.category,
+                               "businessName": response2.data.business_name,
+                                "description": response2.data.description,
+                                "location": response2.data.location,
+                            })
+
                         
                         const response3 = await axios.get(getprofilepicurl, {
                             params: { phoneNumber: phoneNumber },
@@ -100,22 +109,7 @@ function Login( { navigation } ) {
                 if(err.response.status == 404) {
 
                     setSuccess("Logged In!");
-                    // await Storage.setItem("user", {
-                    //     "name": user.name,
-                    //     "phoneNumber": user.phoneNumber,
-                    //     "category": user.category,
-                    //     "businessName": user.businessName,
-                    //     "description": user.description,
-                    //     "location": user.location,
-                    // })
-                    await Storage.setItem("user", {
-                        "phoneNumber": phoneNumber,
-                        "name": response2.data.name,
-                        "category": response2.data.category,
-                       "businessName": response2.data.business_name,
-                        "description": response2.data.description,
-                        "location": response2.data.location,
-                    })
+                     // cookie was alr set after response 2
                     navigation.navigate("HomePage")
                 }
             } else if (err.request) {
