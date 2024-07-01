@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type Handler struct {
@@ -69,6 +70,12 @@ type File struct {
 	ID       int
 	Filename string
 	FileData []byte
+}
+
+type Notification struct {
+	Recipient string `json:"recipient"`
+	Body      string `json:"body"`
+	CreatedAt string `json:"created_at"`
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -432,6 +439,37 @@ func (h *Handler) EditPIN(w http.ResponseWriter, r *http.Request) {
 	_, err = stmt.Exec(hashPin, pins.PhoneNumber)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("success"))
+
+}
+
+func (h *Handler) WriteNotification(w http.ResponseWriter, r *http.Request) {
+
+	var notif Notification
+	err := json.NewDecoder(r.Body).Decode(&notif)
+	if err != nil {
+		http.Error(w, "Incorrect Payload", http.StatusInternalServerError)
+	}
+
+	stmt, err := h.DB.Prepare("INSERT INTO notifications VALUES ($1, $2, $3)")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	defer stmt.Close()
+
+	date, err := time.Parse(time.RFC3339, notif.CreatedAt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = stmt.Exec(notif.Recipient, notif.Body, date)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

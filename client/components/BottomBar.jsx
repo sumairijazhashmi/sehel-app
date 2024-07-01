@@ -17,7 +17,7 @@ function BottomBar( {navigation} ) {
         <View style={styles.container}>
 
           {/* activity page */}
-          <TouchableOpacity style={styles.iconContainer}>
+          <TouchableOpacity style={styles.iconContainer} onPress={() => { navigation.navigate("ViewActivity") }}>
             <Icon name="bell" size={30} color="#9b9bff" />
           </TouchableOpacity>
 

@@ -8,6 +8,7 @@ import HomePage from './HomePage';
 import BottomBar from './BottomBar';
 import MyProfile from "./MyProfile";
 import EditProfile from './EditProfile';
+import ViewActivity from './ViewActivity';
 import * as Storage from "./Storage";
 import { UserContext } from '../context/UserContext';
 
@@ -92,6 +93,11 @@ function AppNavigator() {
           <Stack.Screen
             name="EditProfile"
             component={EditProfile}
+            options = {{headerShown: false}}
+          />
+          <Stack.Screen 
+            name="ViewActivity"
+            component={ViewActivity}
             options = {{headerShown: false}}
           />
         </Stack.Navigator>
