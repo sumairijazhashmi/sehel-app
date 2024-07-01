@@ -16,7 +16,7 @@ function EditProfile({navigation}) {
 
     const { user, setUser } = useContext(UserContext);
 
-    const [photo, setPhoto] = useState(null);
+    const [photo, setPhoto] = useState(user.profilePicUri ? user.profilePicUri : null);
     const [name, setName] = useState(user.name ? user.name : null);
     const [businessName, setBusinessName] = useState(user.businessName ? user.businessName : null);
     const [category, setCategory] = useState(user.category ? user.category : "Select Category");
