@@ -76,6 +76,7 @@ type Notification struct {
 	Recipient string `json:"recipient"`
 	Body      string `json:"body"`
 	CreatedAt string `json:"created_at"`
+	Params    string `json:"params"`
 }
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -455,7 +456,7 @@ func (h *Handler) WriteNotification(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Incorrect Payload", http.StatusInternalServerError)
 	}
 
-	stmt, err := h.DB.Prepare("INSERT INTO notifications VALUES ($1, $2, $3)")
+	stmt, err := h.DB.Prepare("INSERT INTO notifications VALUES ($1, $2, $3, $4)")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -467,7 +468,7 @@ func (h *Handler) WriteNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = stmt.Exec(notif.Recipient, notif.Body, date)
+	_, err = stmt.Exec(notif.Recipient, notif.Body, date, notif.Params)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -476,6 +477,36 @@ func (h *Handler) WriteNotification(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 
+}
+
+func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
+
+	phoneNumber := r.URL.Query().Get("phoneNumber")
+
+	rows, err := h.DB.Query("SELECT * FROM notifications WHERE recipient = $1", phoneNumber)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	defer rows.Close()
+
+	var notifs []Notification
+	for rows.Next() {
+		var row Notification
+		err := rows.Scan(&row.Recipient, &row.Body, &row.CreatedAt, &row.Params)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		notifs = append(notifs, row)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(notifs)
 }
 
 func hashPIN(pin string) string {

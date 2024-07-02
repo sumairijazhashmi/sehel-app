@@ -1,16 +1,57 @@
-import react from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {Text, View, TouchableOpacity, StyleSheet, Button} from 'react-native';
 import BottomBar from "./BottomBar";
-import * as Notifications from 'expo-notifications'
+import Notification from "./Notification";
+import axios from "axios";
+import { getnotifs } from "../constant";
+import { UserContext } from "../context/UserContext";
 
 
 function ViewActivity( {navigation} ) {
+
+    const [notifications, setNotifications] = useState([])
+
+    const { user } = useContext(UserContext);
+
+    useEffect(() => {
+
+        const getNotifications = async () => {
+
+            try {
+
+                const response = await axios.get(getnotifs, {
+                    params: { phoneNumber: user.phoneNumber }
+                })
+
+                if (response.status == 200) {
+                    const sortedNotifications = response.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    setNotifications(sortedNotifications);
+                }
+
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
+        getNotifications()
+    }, [])
+
     return (
         <View style={styles.container}>
             <View style={styles.topBar}>
                 <Text style={styles.pageHeading}>Activity</Text>
             </View>
             <View style={styles.activities}>
+                {
+                      notifications.map((notif, index) => (
+                        <Notification
+                            key={index} 
+                            message={notif.body}
+                            timestamp={notif.created_at}
+                            params={notif.params}
+                        />
+                    ))
+                }
                 {/* dummy code to send notification */}
                 {/* <Button
                     title="Press to schedule a notification"
@@ -58,7 +99,8 @@ const styles = StyleSheet.create({
     activities: {
         display: 'flex',
         flexDirection: 'column',
-        width: '100%'
+        width: '100%',
+        height: '100%'
     }
 })
 

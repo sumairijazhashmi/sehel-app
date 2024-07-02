@@ -9,3 +9,5 @@ export const getuser = `${baseurl}/getuser`;
 export const edituser = `${baseurl}/edituser`;
 export const editpin = `${baseurl}/editpin`;
 export const editphonenumber = `${baseurl}/editphonenumber`;
+export const getnotifs = `${baseurl}/getnotifications`
+export const writenotif = `${baseurl}/writenotification`
