@@ -79,6 +79,21 @@ type Notification struct {
 	Params    string `json:"params"`
 }
 
+type Transaction struct {
+	PhoneNumber string  `json:"phonenumber"`
+	IconName    string  `json:"iconname"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Amount      float64 `json:"amount"`
+	IsExpense   bool    `json:"isexpense"`
+	Date        string  `json:"date"`
+}
+
+type GetTransactionsResponse struct {
+	Balance float64       `json:"balance"`
+	Txns    []Transaction `json:"txns"`
+}
+
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var user LoginUser
 
@@ -507,6 +522,45 @@ func (h *Handler) GetNotifications(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(notifs)
+}
+
+func (h *Handler) GetTransactions(w http.ResponseWriter, r *http.Request) {
+
+	phoneNumber := r.URL.Query().Get("phoneNumber")
+
+	rows, err := h.DB.Query("SELECT * FROM transactions WHERE phone_number = $1", phoneNumber)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	defer rows.Close()
+
+	var txns []Transaction
+	var balance float64
+	balance = 0
+	for rows.Next() {
+		var row Transaction
+		err := rows.Scan(&row.PhoneNumber, &row.IconName, &row.Title, &row.Description, &row.Amount, &row.IsExpense, &row.Date)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		if row.IsExpense {
+			balance -= row.Amount
+		} else {
+			balance += row.Amount
+		}
+		txns = append(txns, row)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := GetTransactionsResponse{Balance: balance, Txns: txns}
+	json.NewEncoder(w).Encode(response)
+
 }
 
 func hashPIN(pin string) string {

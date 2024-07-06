@@ -49,6 +49,7 @@ func main() {
 	mux.HandleFunc("POST /editphonenumber", handler.EditPhoneNumber)
 	mux.HandleFunc("POST /writenotification", handler.WriteNotification)
 	mux.HandleFunc("GET /getnotifications", handler.GetNotifications)
+	mux.HandleFunc("GET /gettransactions", handler.GetTransactions)
 
 	mainHandler := corsMiddleware(mux)
 

@@ -1,19 +1,49 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import BottomBar from "./BottomBar";
 import BudgetCard from "./BudgetCard";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import axios from "axios";
+import { gettxns } from "../constant";
+import { UserContext } from "../context/UserContext";
 
 
 function BudgetHome({navigation}) {
 
-    const [currentBalance, setCurrentBalance] = useState(0);
+    const [currentBalance, setCurrentBalance] = useState(-1);
     const [txns, setTxns] = useState([
-        { iconName: "credit-card", title: "Gas Bill", reason: "Bill", inOrOut: "-", amount: 800, date: "3 April" },
-        { iconName: "shopping-cart", title: "Grocery Shopping", reason: "Sehri Food Items", inOrOut: "-", amount: 1520, date: "1 April" },
-        { iconName: "shopping-bag", title: "Milaad Order", reason: "Dinner Party", inOrOut: "+", amount: 2500, date: "29 March" },
-
+        { iconName: "credit-card", title: "Gas Bill", description: "Bill", isExpense: true, amount: 800, date: "3 April" },
+        { iconName: "shopping-cart", title: "Grocery Shopping", description: "Sehri Food Items", isExpense: true, amount: 1520, date: "1 April" },
+        { iconName: "shopping-bag", title: "Milaad Order", description: "Dinner Party", isExpense: false, amount: 2500, date: "29 March" },
     ]);
+    const {user} = useContext(UserContext);
+
+
+
+    useEffect(() => {
+
+        const getBalanceAndTransactions = async () => {
+            try {
+                const response = await axios.get(gettxns, {
+                    params: {phoneNumber: user.phoneNumber }
+                })
+
+                if (response.status == 200) {
+                    setCurrentBalance(response.data.balance);
+                    if (response.data.txns && response.data.txns.length > 0) {
+                        const sortedTxns = response.data.txns.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        setTxns(sortedTxns);
+                    }
+                }
+            }
+            catch (err) {
+                console.log(err)
+            }
+        }
+
+        getBalanceAndTransactions();
+
+    }, [])
 
     return (
         <View style={styles.container}>
@@ -28,26 +58,24 @@ function BudgetHome({navigation}) {
                 <View style={styles.reportsHeader}>
                     <Text style={styles.recentTxnsTitle}>Recent Transactions</Text>
                     <TouchableOpacity style={styles.viewReportsButton}>
-                        <Text style={styles.viewReportsButtonText}>View Reports</Text>
+                        <Text style={styles.viewReportsButtonText}>View All</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.recentTxns}>
                     {
-                        txns.map((txn, index) => (
+                        txns.slice(0, 3).map((txn, index) => (
                             <BudgetCard
                                 key={index} 
                                 iconName={txn.iconName} 
                                 title={txn.title} 
-                                reason={txn.reason}
-                                inOrOut={txn.inOrOut}
+                                description={txn.description}
+                                isExpense={txn.isExpense}
                                 amount={txn.amount}
                                 date={txn.date}
                             />
                         ))
                     }
-                    <TouchableOpacity style={styles.seeMoreButton}>
-                        <Text style={styles.seeMoreText}>See More</Text>
-                    </TouchableOpacity>
+                    
                 </View>
             </View>
 

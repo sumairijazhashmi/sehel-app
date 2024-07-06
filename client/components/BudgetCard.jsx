@@ -2,7 +2,7 @@ import React from "react";
 import {View, Text, StyleSheet} from "react-native";
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-function BudgetCard({iconName, title, reason, inOrOut, amount, date }) {
+function BudgetCard({iconName, title, description, isExpense, amount, date }) {
 
     return (
         <View style={styles.container}>
@@ -11,10 +11,10 @@ function BudgetCard({iconName, title, reason, inOrOut, amount, date }) {
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>{reason}</Text>
+            <Text style={styles.subtitle}>{description}</Text>
           </View>
           <View style={styles.textContainer2}>
-            {inOrOut == "+" ?  <Text style={styles.amountIn}>{inOrOut} {amount}</Text> : <Text style={styles.amountOut}>{inOrOut} {amount}</Text>}
+            {isExpense ? <Text style={styles.amountOut}>- {amount}</Text> : <Text style={styles.amountIn}>+ {amount}</Text>}
             <Text style={styles.date}>{date}</Text>
           </View>
         </View>
