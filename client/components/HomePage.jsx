@@ -21,7 +21,7 @@ function HomePage( {navigation} ) {
             
                 <View style={styles.cardContainer}>
 
-                    <TouchableOpacity style={styles.card}>
+                    <TouchableOpacity style={styles.card} onPress={() => { navigation.navigate("BudgetHome") }}>
                         <Icon name="wallet-outline" size={40} color="#4CAF50" />
                         <Text style={styles.cardText}>Budgeting Manager</Text>
                     </TouchableOpacity>

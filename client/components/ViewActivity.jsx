@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     pageHeading: {
         color: 'white',
         fontSize: 24,
-        fontWeight: 'regular',
+        fontWeight: 'semibold',
         alignSelf: 'center',
         marginLeft: 50,
         marginTop: 50

@@ -11,6 +11,7 @@ import EditProfile from './EditProfile';
 import ViewActivity from './ViewActivity';
 import * as Storage from "./Storage";
 import { UserContext } from '../context/UserContext';
+import BudgetHome from './BudgetingHomePage';
 
 
 const Stack = createNativeStackNavigator();
@@ -98,6 +99,11 @@ function AppNavigator() {
           <Stack.Screen 
             name="ViewActivity"
             component={ViewActivity}
+            options = {{headerShown: false}}
+          />
+          <Stack.Screen 
+            name="BudgetHome"
+            component={BudgetHome}
             options = {{headerShown: false}}
           />
         </Stack.Navigator>
